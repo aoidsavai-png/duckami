@@ -3,7 +3,7 @@ heading.textContent = "CLICK HERE TO START";
 document.body.addEventListener("click", init);
 
 async function init() {
-  heading.textContent = "Voice-change-O-matic";
+  heading.textContent = "Voa";
   document.body.removeEventListener("click", init);
 
   const audioCtx = new AudioContext();
