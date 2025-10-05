@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Harmonic Soundscape with MIDI</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Noto+Sans+Thai:wght@400;700&family=Noto+Sans:wght@400;700&display=swap');
+        body {
+            font-family: 'Noto Sans', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #1a2a3a;
+            margin: 0;
+            color: #333;
+        }
+        .container {
+            background-color: white;
+            padding: 2.5rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 650px;
+            text-align: center;
+        }
+        .phrase-card {
+            min-height: 220px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem 2rem 1rem 2rem;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+        }
+        .native-text {
+            font-size: 2.6rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            line-height: 1.4;
+            color: #2c3e50;
+        }
+        .lang-info {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 1rem;
+        }
+        .translation {
+            font-size: 1.25rem;
+            color: #005a9c;
+            font-style: italic;
+            font-weight: bold;
+        }
+        .preview-section {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 2px dashed #e0e0e0;
+            opacity: 0.8;
+        }
+        .preview-title {
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #888;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .preview-text {
+            font-size: 1.2rem;
+            color: #555;
+            min-height: 1.5em;
+        }
+        #speak-button {
+            margin-top: 2rem;
+            background-color: #28a745;
+            color: white;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 1.2rem;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+        #speak-button:hover:not(:disabled) {
+            background-color: #218838;
+        }
+        #speak-button:disabled {
+             background-color: #5cb85c;
+             cursor: wait;
+        }
+        .controls {
+            margin-top: 1.5rem;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            background-color: rgba(0, 0, 0, 0.05);
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .slider-container {
+            width: 100%;
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            align-items: center;
+        }
+        label {
+            text-align: right;
+            margin-right: 15px;
+            font-size: 0.9em;
+        }
+        input[type="range"] {
+            width: 100%;
+            cursor: pointer;
+        }
+        .lang-ja-JP { font-family: 'Noto Sans JP', sans-serif; }
+        .lang-th-TH { font-family: 'Noto Sans Thai', sans-serif; }
+        .lang-sa-IN { font-family: 'Noto Sans', sans-serif; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="phrase-card" id="phrase-card">
+        <div class="main-content">
+            <div class="native-text" id="native-text">Click to Begin</div>
+            <div class="lang-info" id="lang-info">The soundscape will react to the voice.</div>
+            <div class="translation" id="translation"></div>
+        </div>
+        <div class="preview-section">
+            <div class="preview-title">NEXT PRECEPT</div>
+            <div class="preview-text" id="preview-text"></div>
+        </div>
+    </div>
+    <button id="speak-button">Begin</button>
+    <div class="controls">
+        <div class="slider-container">
+            <label for="waves-volume">🌊 Waves</label>
+            <input type="range" id="waves-volume" min="-40" max="0" value="-24" step="1">
+        </div>
+        <div class="slider-container">
+            <label for="wind-volume">💨 Wind</label>
+            <input type="range" id="wind-volume" min="-40" max="-10" value="-30" step="1">
+        </div>
+        <div class="slider-container">
+            <label for="birds-volume">🐦 Birds</label>
+            <input type="range" id="birds-volume" min="-30" max="0" value="-8" step="1">
+        </div>
+        <div class="slider-container">
+            <label for="midi-volume">🎵 MIDI Melody</label>
+            <input type="range" id="midi-volume" min="-30" max="0" value="-12" step="1">
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+<script>
+    window.MIDI_DATA = {"header":{"keySignatures":[{"key":"C","scale":"major","ticks":0}],"meta":[{"text":"Kalvai\n","ticks":0,"type":"text"},{"text":"Intro","ticks":480,"type":"marker"},{"text":"start rythm","ticks":8160,"type":"marker"},{"text":"theme","ticks":10080,"type":"marker"},{"text":"1st interlude","ticks":18720,"type":"marker"},{"text":"verse","ticks":20640,"type":"marker"},{"text":"stop rythm","ticks":26396,"type":"marker"},{"text":"2nd Interlude","ticks":39836,"type":"marker"},{"text":"add voice","ticks":45597,"type":"marker"},{"text":"break","ticks":49436,"type":"marker"},{"text":"end","ticks":59032,"type":"marker"}],"name":"SaagarJaisi","ppq":120,"tempos":[{"bpm":89.9999550000225,"ticks":0}],"timeSignatures":[{"ticks":0,"timeSignature":[4,4],"measures":0}]},"tracks":[{"channel":0,"controlChanges":{},"pitchBends":[],"instrument":{"family":"guitar","number":25,"name":"acoustic guitar (steel)"},"name":"12 String","notes":[{"duration":0.51,"midi":57,"name":"A3","ticks":481,"time":2.67,"velocity":0.58},{"duration":0.11,"midi":52,"name":"E3","ticks":576,"time":3.18,"velocity":0.38},{"duration":0.14,"midi":57,"name":"A3","ticks":594,"time":3.28,"velocity":0.4},{"duration":0.17,"midi":61,"name":"C#4","ticks":609,"time":3.36,"velocity":0.37},{"duration":0.21,"midi":64,"name":"E4","ticks":628,"time":3.46,"velocity":0.63},{"duration":0.25,"midi":64,"name":"E4","ticks":691,"time":3.78,"velocity":0.75},{"duration":0.34,"midi":61,"name":"C#4","ticks":735,"time":4,"velocity":0.48},{"duration":0.28,"midi":61,"name":"C#4","ticks":840,"time":4.51,"velocity":0.58},{"duration":0.28,"midi":62,"name":"D4","ticks":896,"time":4.78,"velocity":0.5},{"duration":0.33,"midi":64,"name":"E4","ticks":950,"time":5.04,"velocity":0.45},{"duration":0.34,"midi":65,"name":"F4","ticks":1013,"time":5.37,"velocity":0.71},{"duration":0.52,"midi":64,"name":"E4","ticks":1075,"time":5.7,"velocity":0.37},{"duration":0.07,"midi":65,"name":"F4","ticks":1087,"time":5.76,"velocity":0.53}]}]};
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const nativeTextElem = document.getElementById('native-text');
+        const langInfoElem = document.getElementById('lang-info');
+        const translationElem = document.getElementById('translation');
+        const previewTextElem = document.getElementById('preview-text');
+        const speakButton = document.getElementById('speak-button');
+        
+        let isAudioReady = false;
+        let modSignal, wavesVolume, windVolume, birdSynth, midiVolume;
+
+        function setupAudio() {
+            modSignal = new Tone.Signal(0);
+
+            const wavesFilter = new Tone.AutoFilter({ frequency: 0.5, baseFrequency: 80, octaves: 4 }).toDestination();
+            wavesVolume = new Tone.Volume(-24).connect(wavesFilter);
+            const waveNoise = new Tone.Noise("brown").connect(wavesVolume).start();
+            modSignal.connect(new Tone.Scale(80, 600)).connect(wavesFilter.frequency);
+            wavesFilter.start();
+
+            const windFilter = new Tone.AutoFilter({ frequency: "2n", baseFrequency: 300, octaves: 5 }).toDestination();
+            windVolume = new Tone.Volume(-30).connect(windFilter);
+            const windNoise = new Tone.Noise("pink").connect(windVolume).start();
+            modSignal.connect(new Tone.Scale(300, 2200)).connect(windFilter.frequency);
+            windFilter.start();
+            
+            // --- BIRDSONG: SIMPLIFIED LOOP FOR STABILITY ---
+            birdSynth = new Tone.PolySynth({ voice: Tone.FMSynth, options: {
+                harmonicity: 1.5, modulationIndex: 10, detune: 10,
+                envelope: { attack: 0.001, decay: 0.725, sustain: 0.5, release: 1 },
+            }}).toDestination();
+            birdSynth.volume.value = 0;
+
+            const sanskritScale = ["C5", "D5", "E5", "G5", "B5", "C6", "D6", "E6", "G6"];
+            const birdLoop = new Tone.Loop(time => {
+                const modValue = modSignal.getValueAtTime(time);
+                let chord = [];
+                const rootNoteIndex = Math.floor(Math.random() * (sanskritScale.length - 4));
+                chord.push(sanskritScale[rootNoteIndex]);
+                if (modValue > 0.2) chord.push(sanskritScale[rootNoteIndex + 2]);
+                if (modValue > 0.6) chord.push(sanskritScale[rootNoteIndex + 4]);
+                
+                // Play one chord per loop iteration - this is much more stable.
+                birdSynth.triggerAttackRelease(chord, "16n", time, Math.random() * 0.5 + 0.2);
+            }, "8n").set({ humanize: true });
+
+            // --- MIDI: RE-ARCHITECTED TO PLAY THE FULL SONG ---
+            const midiSynth = new Tone.PolySynth({ voice: Tone.PluckSynth, options: {
+                attackNoise: 0.5, dampening: 4000, resonance: 0.9, release: 0.8
+            }});
+            midiVolume = new Tone.Volume(-12).toDestination();
+            const midiDucker = new Tone.Gain(1).connect(midiVolume);
+            midiSynth.connect(midiDucker);
+            modSignal.connect(new Tone.Scale(1, 0.2)).connect(midiDucker.gain);
+
+            const midiPart = new Tone.Part((time, value) => {
+                 midiSynth.triggerAttackRelease(value.note, value.duration, time, value.velocity);
+            }, []);
+            midiPart.loop = true; // Loop the entire song
+
+            try {
+                const parsedMidi = window.MIDI_DATA;
+                const trackWithNotes = parsedMidi.tracks.find(track => track.notes && track.notes.length > 0);
+                if (trackWithNotes) {
+                    const lastNote = trackWithNotes.notes[trackWithNotes.notes.length - 1];
+                    midiPart.loopEnd = lastNote.time + lastNote.duration;
+                    
+                    trackWithNotes.notes.forEach(note => {
+                        midiPart.add({
+                            time: note.time,
+                            note: Tone.Frequency(note.midi, "midi"),
+                            duration: note.duration,
+                            velocity: note.velocity * 0.8
+                        });
+                    });
+                }
+            } catch(e) { console.error("Failed to process MIDI data:", e); }
+
+            // Connect UI sliders to audio nodes
+            document.getElementById('waves-volume').addEventListener('input', e => wavesVolume.volume.value = parseFloat(e.target.value));
+            document.getElementById('wind-volume').addEventListener('input', e => windVolume.volume.value = parseFloat(e.target.value));
+            document.getElementById('birds-volume').addEventListener('input', e => birdSynth.volume.value = parseFloat(e.target.value));
+            document.getElementById('midi-volume').addEventListener('input', e => midiVolume.volume.value = parseFloat(e.target.value));
+            
+            return { birdLoop, midiPart };
+        }
+
+        // --- SPEECH & PRECEPT LOGIC ---
+        const phrases = [
+            { text: "発霊法", lang: "ja-JP", langName: "Japanese", transliteration: "Hatsurei Ho", translation: "" }, { text: "今日大けは怒るな", lang: "ja-JP", langName: "Japanese", transliteration: "Kyō dake wa ikaruna", translation: "Just for today, do not anger." }, { text: "心配すな", lang: "ja-JP", langName: "Japanese", transliteration: "Shinpai suna", translation: "Do not worry." }, { text: "感謝して", lang: "ja-JP", langName: "Japanese", transliteration: "Kansha shite", translation: "Be grateful." }, { text: "業をはげめ", lang: "ja-JP", langName: "Japanese", transliteration: "Gyō o hageme", translation: "Work diligently." }, { text: "人に親切に", lang: "ja-JP", langName: "Japanese", transliteration: "Hito ni shinsetsu ni", translation: "Be kind to others." }, { text: "แนวทางการดำเนินชีวิตประจำวัน", lang: "th-TH", langName: "Thai", transliteration: "Næwthāng kār dảnein chīwit pracả wạn", translation: "" }, { text: "แค่เพียงวันนี้ อย่าโกรธ", lang: "th-TH", langName: "Thai", transliteration: "Khæ̀ pheīyng wạn nī̂ xỳā korṭh", translation: "Just for today, do not anger." }, { text: "อย่ากังวล", lang: "th-TH", langName: "Thai", transliteration: "xỳā kạngwl", translation: "Do not worry." }, { text: "จงมีความกตัญญู", lang: "th-TH", langName: "Thai", transliteration: "cng mī khwām ktạỵỵū", translation: "Be grateful." }, { text: "ทำงานด้วยความขยันขันแข็ง", lang: "th-TH", langName: "Thai", transliteration: "thảngān d̂wy khwām k̄hyạn k̄hạn k̄hæ̆ng", translation: "Work diligently." }, { text: "จงมีความเมตตาต่อผู้อื่น", lang: "th-TH", langName: "Thai", transliteration: "cng mī khwām mettā t̀x p̄hū̂ xụ̄̀n", translation: "Be kind to others." }, { text: "दैनन्दिनजीवनस्य मार्गदर्शिकाः", lang: "sa-IN", langName: "Sanskrit", transliteration: "dainikajivanasya margadarshikah", translation: "" }, { text: "अद्यत्वे एव मा क्रुद्धाः भवन्तु", lang: "sa-IN", langName: "Sanskrit", transliteration: "adyatve eva maa kruddhah bhavantu", translation: "Just for today, do not anger." }, { text: "चिंता मास्तु", lang: "sa-IN", langName: "Sanskrit", transliteration: "chinta mastu", translation: "Do not worry." }, { text: "कृतज्ञतां भवन्तु", lang: "sa-IN", langName: "Sanskrit", transliteration: "kritgyatam bhavantu", translation: "Be grateful." }, { text: "यत्नपूर्वकं कार्यं कुर्वन्तु", lang: "sa-IN", langName: "Sanskrit", transliteration: "yatnapurvakam karyam kurvantu", translation: "Work diligently." }, { text: "अन्येषां प्रति दयालुः भवतु", lang: "sa-IN", langName: "Sanskrit", transliteration: "anyesham prati dayaluh bhavatu", translation: "Be kind to others." }
+        ];
+        let currentIndex = -1;
+        let voices = [];
+        
+        function loadVoices() {
+            voices = window.speechSynthesis.getVoices();
+            if (voices.length === 0) {
+                window.speechSynthesis.onvoiceschanged = () => { voices = window.speechSynthesis.getVoices(); };
+            }
+        }
+
+        function updatePreview() {
+            const previewIndex = (currentIndex + 1) % phrases.length;
+            previewTextElem.textContent = `${phrases[previewIndex].text} (${phrases[previewIndex].transliteration})`;
+        }
+
+        function displayAndSpeak() {
+            window.speechSynthesis.cancel();
+            speakButton.disabled = true;
+            currentIndex = (currentIndex + 1) % phrases.length;
+            const currentPhrase = phrases[currentIndex];
+
+            nativeTextElem.textContent = currentPhrase.text;
+            nativeTextElem.className = `native-text lang-${currentPhrase.lang}`;
+            langInfoElem.textContent = `${currentPhrase.langName} (${currentPhrase.transliteration})`;
+            translationElem.innerHTML = currentPhrase.translation ? `"${currentPhrase.translation}"` : '';
+
+            const utterance = new SpeechSynthesisUtterance(currentPhrase.text);
+            utterance.lang = currentPhrase.lang;
+            const languageToFind = currentPhrase.lang === 'sa-IN' ? 'hi-IN' : currentPhrase.lang;
+            const specificVoice = voices.find(voice => voice.lang === languageToFind);
+            if (specificVoice) { utterance.voice = specificVoice; }
+            utterance.rate = 0.85;
+
+            utterance.onstart = () => { if(modSignal) modSignal.rampTo(1, 0.1); };
+            utterance.onend = () => {
+                if(modSignal) modSignal.rampTo(0, 1.5);
+                speakButton.disabled = false;
+            };
+            utterance.onerror = (e) => {
+                console.error("Speech Synthesis Error:", e);
+                if(modSignal) modSignal.rampTo(0, 0.5);
+                speakButton.disabled = false;
+            };
+            
+            window.speechSynthesis.speak(utterance);
+            updatePreview();
+        }
+
+        // --- MASTER CONTROL ---
+        async function handleStart() {
+            if (isAudioReady) {
+                displayAndSpeak();
+                return;
+            }
+            
+            await Tone.start();
+            console.log("AudioContext resumed.");
+            
+            const { birdLoop, midiPart } = setupAudio();
+            
+            await Tone.Transport.start();
+            console.log("Transport started.");
+
+            birdLoop.start(0);
+            midiPart.start(0);
+            
+            loadVoices();
+            updatePreview();
+            isAudioReady = true;
+            speakButton.textContent = "Speak Next Precept";
+            console.log("Audio setup complete.");
+            
+            displayAndSpeak();
+        }
+
+        speakButton.addEventListener('click', handleStart);
+    });
+</script>
+
+</body>
+</html>
