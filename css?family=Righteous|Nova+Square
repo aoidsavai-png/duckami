@@ -1,0 +1,12 @@
+@font-face {
+  font-family: 'Nova Square';
+  font-style: normal;
+  font-weight: 400;
+  src: url(RrQUbo9-9DV7b06QHgSWsahHT4c.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Righteous';
+  font-style: normal;
+  font-weight: 400;
+  src: url(1cXxaUPXBpj2rGoU7C9WiHGA.ttf) format('truetype');
+}
