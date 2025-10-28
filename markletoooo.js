@@ -1,5 +1,5 @@
 javascript:(function(){
   var s=document.createElement('script');
-  s.src='https://yourdomain.github.io/maptree.js';
+  s.src='https://aoidsavai-png.github.io/duckami/maptree.js';
   document.body.appendChild(s);
 })();
