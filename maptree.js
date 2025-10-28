@@ -7,7 +7,7 @@
  *************************************************************/
 
 (function() {
-  const MAPS_API_KEY = 'YOUR_API_KEY_HERE';  // <--- put your key here
+  const MAPS_API_KEY = 'AIzaSyDINa2bqCwW6mj0tXZc1A0YwxHB0qPQdEo';  // <--- put your key here
   const NODE_COUNT = 10;
   const AUTO_CLOSE_SECONDS = 0;
 
